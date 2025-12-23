@@ -1,0 +1,35 @@
+@Scheduled(cron = "0 * * * * *")  // 매분 0초에 실행
+    public void checkSchedules() {
+        System.out.println("⏰ 스케줄러 실행됨: " + LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
+        List<ScheduleEntity> dueSchedules = repository.findByNotifiedFalse();
+
+        for (ScheduleEntity schedule : dueSchedules) {
+            try {
+                LocalTime time = LocalTime.parse(schedule.getTime());
+                LocalDate date = schedule.getDate();
+                LocalDateTime scheduleTime = LocalDateTime.of(date, time);
+                if(scheduleTime.equals(now)) {
+                    String message = "🔔 지금 '" + schedule.getTitle() + "' 일정 시간이에요! 💪";
+
+
+                    if (messagingTemplate != null) {
+                        messagingTemplate.convertAndSend("/topic/notification/" + schedule.getNickname(), message);
+                        System.out.println("✅ 알림 전송 성공: " + message);
+                        messagingTemplate.convertAndSend(
+                                "/topic/notification",
+                                "지금은 계획된 일정 시간입니다!"
+                        );
+                    } else {
+                        System.out.println("❌ messagingTemplate이 null입니다!!!");
+                    }
+                    // 선택: 알림 보낸 일정은 상태 업데이트 (이미 알림 보냈다고 표시)
+                    schedule.setNotified(true);
+                    repository.save(schedule);
+                }
+            } catch (Exception e) {
+                System.out.println("❌ 날짜 파싱 실패: " + schedule.getStartTime());
+            }
+
+        }
+    }
