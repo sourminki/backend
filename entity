@@ -1,0 +1,16 @@
+@Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    private String nickname;
+    private LocalDateTime startTime; // 없애야됨
+    private LocalDate date;
+    private boolean notified = false;  // 추가!
+    private String time;
+
+    private int mood;
+
+    private String title;
+
+    private int time_taken;
+}
